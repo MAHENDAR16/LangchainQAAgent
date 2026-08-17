@@ -30,6 +30,7 @@ class Settings:
     chunk_size: int
     chunk_overlap: int
     retrieval_k: int
+    checkpoint_db_path: Path
 
     @classmethod
     def load(cls, require_groq_key: bool = True) -> "Settings":
@@ -65,4 +66,7 @@ class Settings:
             chunk_size=int(os.getenv("CHUNK_SIZE", "1000")),
             chunk_overlap=int(os.getenv("CHUNK_OVERLAP", "150")),
             retrieval_k=int(os.getenv("RETRIEVAL_K", "4")),
+            checkpoint_db_path=Path(
+                os.getenv("CHECKPOINT_DB_PATH", str(PROJECT_ROOT / "checkpoints.sqlite"))
+            ),
         )

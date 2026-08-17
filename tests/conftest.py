@@ -40,4 +40,5 @@ def test_settings(tmp_path: Path, sample_doc_dir: Path) -> Settings:
         chunk_size=200,
         chunk_overlap=20,
         retrieval_k=2,
+        checkpoint_db_path=tmp_path / "checkpoints.sqlite",
     )

@@ -10,10 +10,12 @@ from __future__ import annotations
 import logging
 
 from langchain.agents import create_agent
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool, tool
 from langchain_groq import ChatGroq
 
+from src.agent.memory import build_checkpointer
 from src.config import Settings
 from src.retrieval.retriever import (
     RetrieverError,
@@ -79,13 +81,30 @@ def _make_search_documents_tool(retriever, settings: Settings) -> BaseTool:
     return search_documents_tool
 
 
-def build_agent(settings: Settings | None = None, llm: BaseChatModel | None = None):
+def build_agent(
+    settings: Settings | None = None,
+    llm: BaseChatModel | None = None,
+    checkpointer: BaseCheckpointSaver | None = None,
+):
     """Construct the Groq-backed LangChain agent with the retriever tool.
+
+    The agent is compiled with a persistent checkpointer, so conversation
+    history is stored per ``thread_id`` (see src/agent/memory.py) and
+    survives application restarts. Callers should invoke the agent with only
+    the newest message plus a thread-scoped config, e.g.::
+
+        agent.invoke(
+            {"messages": [HumanMessage(content=question)]},
+            config=thread_config(user_id),
+        )
 
     Args:
         settings: Application settings. Loaded from the environment if omitted.
         llm: Optional chat model override, primarily for tests. Defaults to a
             Groq chat model configured from ``settings``.
+        checkpointer: Optional checkpoint saver override, primarily for
+            tests. Defaults to a persistent SQLite store at
+            ``settings.checkpoint_db_path``.
     """
     settings = settings or Settings.load()
 
@@ -98,10 +117,13 @@ def build_agent(settings: Settings | None = None, llm: BaseChatModel | None = No
         temperature=0,
     )
 
+    checkpointer = checkpointer or build_checkpointer(settings)
+
     agent = create_agent(
         model=llm,
         tools=[retriever_tool],
         system_prompt=SYSTEM_PROMPT,
+        checkpointer=checkpointer,
     )
 
     logger.info("Agent initialized")

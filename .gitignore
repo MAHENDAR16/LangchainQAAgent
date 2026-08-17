@@ -11,5 +11,8 @@ __pycache__/
 # Vector store (rebuildable via ingestion)
 chroma_db/
 
+# Conversation checkpoint store (contains user chat history)
+checkpoints.sqlite*
+
 # OS
 .DS_Store

@@ -7,10 +7,12 @@ Usage:
 from __future__ import annotations
 
 import logging
+import uuid
 
 from langchain_core.messages import HumanMessage
 
 from src.agent.agent import build_agent
+from src.agent.memory import thread_config
 from src.config import ConfigError, Settings
 from src.retrieval.retriever import RetrieverError
 
@@ -37,7 +39,19 @@ def run_cli() -> None:
     print("Document Q&A Agent")
     print("Type 'exit' to quit.\n")
 
-    messages: list = []
+    user_id = input(
+        "User ID (reuse an ID to resume your saved conversation, "
+        "leave blank for a new anonymous session): "
+    ).strip()
+    thread_id = user_id or f"anonymous-{uuid.uuid4()}"
+    config = thread_config(thread_id)
+
+    prior_state = agent.get_state(config)
+    prior_messages = prior_state.values.get("messages", []) if prior_state.values else []
+    if prior_messages:
+        print(f"\nResuming saved conversation for '{thread_id}' "
+              f"({len(prior_messages)} prior message(s)).\n")
+    print()
 
     while True:
         try:
@@ -52,19 +66,17 @@ def run_cli() -> None:
             print("Goodbye!")
             break
 
-        messages.append(HumanMessage(content=question))
-
         try:
-            result = agent.invoke({"messages": messages})
-            messages = result["messages"]
-            answer = messages[-1].content
+            result = agent.invoke(
+                {"messages": [HumanMessage(content=question)]}, config=config
+            )
+            answer = result["messages"][-1].content
         except Exception as exc:  # Groq API errors, network errors, etc.
             logger.error("Agent invocation failed: %s", exc)
             answer = (
                 "Sorry, something went wrong while generating an answer. "
                 "Please try again."
             )
-            messages.pop()  # drop the unanswered question from history
 
         print(f"\nAgent: {answer}\n")
 
