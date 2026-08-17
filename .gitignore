@@ -1,0 +1,15 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Vector store (rebuildable via ingestion)
+chroma_db/
+
+# OS
+.DS_Store
