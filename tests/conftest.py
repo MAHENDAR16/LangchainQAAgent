@@ -45,4 +45,6 @@ def test_settings(tmp_path: Path, sample_doc_dir: Path) -> Settings:
         context_edit_keep_tool_outputs=3,
         summarization_trigger_tokens=6000,
         summarization_keep_messages=12,
+        langsmith_tracing=False,
+        langsmith_project="test-project",
     )

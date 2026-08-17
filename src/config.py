@@ -35,6 +35,8 @@ class Settings:
     context_edit_keep_tool_outputs: int
     summarization_trigger_tokens: int
     summarization_keep_messages: int
+    langsmith_tracing: bool
+    langsmith_project: str
 
     @classmethod
     def load(cls, require_groq_key: bool = True) -> "Settings":
@@ -85,4 +87,7 @@ class Settings:
             summarization_keep_messages=int(
                 os.getenv("SUMMARIZATION_KEEP_MESSAGES", "12")
             ),
+            langsmith_tracing=os.getenv("LANGSMITH_TRACING", "false").strip().lower()
+            == "true",
+            langsmith_project=os.getenv("LANGSMITH_PROJECT", "document-qa-agent"),
         )

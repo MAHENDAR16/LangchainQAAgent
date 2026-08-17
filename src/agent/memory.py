@@ -33,5 +33,15 @@ def build_checkpointer(settings: Settings) -> SqliteSaver:
 
 
 def thread_config(thread_id: str) -> dict:
-    """Build the LangGraph run config that scopes a call to one conversation thread."""
-    return {"configurable": {"thread_id": thread_id}}
+    """Build the LangGraph run config that scopes a call to one conversation thread.
+
+    Also tags/labels the run with the thread id, so per-user runs are easy to
+    find and filter in the LangSmith UI when tracing is enabled (see
+    LANGSMITH_TRACING in .env.example) — these keys are inert no-ops when
+    tracing is off.
+    """
+    return {
+        "configurable": {"thread_id": thread_id},
+        "tags": [f"thread:{thread_id}"],
+        "metadata": {"thread_id": thread_id},
+    }

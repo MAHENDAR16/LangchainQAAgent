@@ -35,3 +35,19 @@ def test_load_respects_environment_overrides(monkeypatch: pytest.MonkeyPatch) ->
     settings = Settings.load()
     assert settings.chunk_size == 500
     assert settings.retrieval_k == 8
+
+
+def test_langsmith_tracing_defaults_to_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "abc123")
+    monkeypatch.delenv("LANGSMITH_TRACING", raising=False)
+    settings = Settings.load()
+    assert settings.langsmith_tracing is False
+
+
+def test_langsmith_tracing_can_be_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GROQ_API_KEY", "abc123")
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+    monkeypatch.setenv("LANGSMITH_PROJECT", "my-project")
+    settings = Settings.load()
+    assert settings.langsmith_tracing is True
+    assert settings.langsmith_project == "my-project"
