@@ -10,6 +10,11 @@ from __future__ import annotations
 import logging
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import (
+    ClearToolUsesEdit,
+    ContextEditingMiddleware,
+    SummarizationMiddleware,
+)
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langchain_core.language_models import BaseChatModel
 from langchain_core.tools import BaseTool, tool
@@ -119,11 +124,34 @@ def build_agent(
 
     checkpointer = checkpointer or build_checkpointer(settings)
 
+    # Bound token growth on long conversations instead of replaying the full
+    # history (including every past retrieved chunk) on every turn:
+    #   1. ContextEditingMiddleware clears older tool outputs first (retrieved
+    #      document chunks are the main token cost here) — no extra LLM call.
+    #   2. SummarizationMiddleware then condenses older messages into a
+    #      summary if the history is still large, keeping recent turns intact.
+    middleware = [
+        ContextEditingMiddleware(
+            edits=[
+                ClearToolUsesEdit(
+                    trigger=settings.context_edit_trigger_tokens,
+                    keep=settings.context_edit_keep_tool_outputs,
+                )
+            ],
+        ),
+        SummarizationMiddleware(
+            model=llm,
+            trigger=("tokens", settings.summarization_trigger_tokens),
+            keep=("messages", settings.summarization_keep_messages),
+        ),
+    ]
+
     agent = create_agent(
         model=llm,
         tools=[retriever_tool],
         system_prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
+        middleware=middleware,
     )
 
     logger.info("Agent initialized")

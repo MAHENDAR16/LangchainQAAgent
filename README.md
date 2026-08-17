@@ -162,11 +162,21 @@ streamlit run src/ui/app.py
 ```
 
 Opens a chat interface in your browser. Like the CLI, it only queries the
-existing ChromaDB collection — run ingestion first if you haven't. The
-sidebar shows the active model/embedding config, a "User ID" field (see
-[Conversation Memory](#conversation-memory)), and a "Clear this conversation"
-button; each assistant reply has a "Retrieved chunks" expander showing the
-exact chunks `search_documents` returned, for inspecting retrieval quality.
+existing ChromaDB collection — run ingestion first if you haven't.
+
+You'll land on a login screen with four sample users (`alice`, `bob`,
+`carol`, `dave` — see `SAMPLE_USERS` in `src/ui/app.py`). Pick one and click
+**Login**. This is a demo login (no password) meant to showcase per-user
+persisted memory, not real authentication — see
+[Conversation Memory](#conversation-memory). Logging out (sidebar) does not
+delete history; logging back in as the same user restores their conversation,
+even after restarting the app. Different users' conversations are fully
+isolated from each other.
+
+The sidebar also shows the active model/embedding config and a "Clear this
+conversation" button (permanently deletes the current user's saved history);
+each assistant reply has a "Retrieved chunks" expander showing the exact
+chunks `search_documents` returned, for inspecting retrieval quality.
 
 ## Example Questions
 
@@ -216,14 +226,14 @@ A system prompt instructs the agent to:
 The agent is compiled with a LangGraph **checkpointer**
 (`src/agent/memory.py`), which persists each conversation's full message
 history to a local SQLite database (`CHECKPOINT_DB_PATH`, default
-`checkpoints.sqlite`) keyed by a **`thread_id`** — in this app, a user-supplied
-"User ID". This means:
+`checkpoints.sqlite`) keyed by a **`thread_id`**: the logged-in username in
+the Streamlit UI, or a typed "User ID" in the CLI. This means:
 
-- **History survives restarts.** Since state lives on disk (not in a Python
-  process), stopping and restarting the CLI or the Streamlit server does not
-  lose a conversation — reusing the same User ID resumes it.
-- **History is isolated per user.** Different User IDs never see each
-  other's messages; each is an independent LangGraph thread.
+- **History survives restarts and logout.** Since state lives on disk (not
+  in a Python process or browser session), stopping and restarting the app,
+  or logging out and back in as the same user, does not lose a conversation.
+- **History is isolated per user.** Different users never see each other's
+  messages; each is an independent LangGraph thread.
 - **Callers only send the newest message.** Because the checkpointer already
   holds prior turns, `src/main.py` and `src/ui/app.py` invoke the agent with
   just the latest `HumanMessage` plus a thread-scoped config

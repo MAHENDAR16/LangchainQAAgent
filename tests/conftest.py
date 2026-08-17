@@ -41,4 +41,8 @@ def test_settings(tmp_path: Path, sample_doc_dir: Path) -> Settings:
         chunk_overlap=20,
         retrieval_k=2,
         checkpoint_db_path=tmp_path / "checkpoints.sqlite",
+        context_edit_trigger_tokens=4000,
+        context_edit_keep_tool_outputs=3,
+        summarization_trigger_tokens=6000,
+        summarization_keep_messages=12,
     )

@@ -31,6 +31,10 @@ class Settings:
     chunk_overlap: int
     retrieval_k: int
     checkpoint_db_path: Path
+    context_edit_trigger_tokens: int
+    context_edit_keep_tool_outputs: int
+    summarization_trigger_tokens: int
+    summarization_keep_messages: int
 
     @classmethod
     def load(cls, require_groq_key: bool = True) -> "Settings":
@@ -68,5 +72,17 @@ class Settings:
             retrieval_k=int(os.getenv("RETRIEVAL_K", "4")),
             checkpoint_db_path=Path(
                 os.getenv("CHECKPOINT_DB_PATH", str(PROJECT_ROOT / "checkpoints.sqlite"))
+            ),
+            context_edit_trigger_tokens=int(
+                os.getenv("CONTEXT_EDIT_TRIGGER_TOKENS", "4000")
+            ),
+            context_edit_keep_tool_outputs=int(
+                os.getenv("CONTEXT_EDIT_KEEP_TOOL_OUTPUTS", "3")
+            ),
+            summarization_trigger_tokens=int(
+                os.getenv("SUMMARIZATION_TRIGGER_TOKENS", "6000")
+            ),
+            summarization_keep_messages=int(
+                os.getenv("SUMMARIZATION_KEEP_MESSAGES", "12")
             ),
         )

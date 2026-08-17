@@ -13,6 +13,9 @@ chroma_db/
 
 # Conversation checkpoint store (contains user chat history)
 checkpoints.sqlite*
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 # OS
 .DS_Store
